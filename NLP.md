@@ -693,7 +693,7 @@ h_t = (1 - z_t) \odot h_{t-1} + z_t \odot \tilde{h}_t
 > 类比：这一步就像做决策时结合以往经验和新信息，决定下一步行动。
 
 
-## LSTM
+# LSTM
 ![](
   https://i-blog.csdnimg.cn/direct/4b65bdbe9a7b4c908f56f0043165c476.png
 )
@@ -726,7 +726,7 @@ LSTM（Long Short-Term Memory）是为了解决 RNN 中梯度消失和记忆保�
 
 > 类比：你在接受新信息前，会先判断旧信息是否过时或无用，从而选择性遗忘。
 
----
+---x
 
 ### 4. 🧬 Final Memory Generation（最终记忆更新）
 
@@ -751,6 +751,114 @@ h_t = o_t \odot \tanh(c_t)
 > 类比：你不会把全部记忆都说出来，而是选择性地表达关键信息，供下一个环节使用。
 
 
+# a3
+🧠 模型结构总览
+输入： 一句中文（源语言句子）
+输出： 一句英文（目标语言句子）
+主要模块：
+
+Embedding 层
+
+卷积层（CNN）
+
+双向 LSTM 编码器（Bidirectional Encoder）
+
+单向 LSTM 解码器（Decoder）
+
+注意力机制（Attention）
+
+输出层 + Softmax + CrossEntropy 训练
+
+🔍 各个步骤详解
+1️⃣ 输入编码（Encoder）
+将每个中文词或子词转化为嵌入向量 x₁, x₂, ..., xₘ ∈ ℝᵉ
+
+这些嵌入经过卷积层处理（可提取局部特征）
+
+然后输入 双向 LSTM 编码器：
+
+前向 LSTM 输出：h→₁, h→₂, ..., h→ₘ
+
+后向 LSTM 输出：h←₁, h←₂, ..., h←ₘ
+
+最终的每个时刻的编码器状态为拼接结果：
+henc_i = [h←_i; h→_i] ∈ ℝ²ʰ
+
+2️⃣ 初始化解码器状态
+解码器初始状态 h₀^dec, c₀^dec 是编码器第一个和最后一个隐藏状态拼接后，通过线性变换得到：
+
+hdec₀ = Wh × [h←₁; h→ₘ]
+
+cdec₀ = Wc × [c←₁; c→ₘ]
+
+3️⃣ 解码（Decoder）
+每一步解码输入 yt 是当前英文词的嵌入和上一时刻的 output vector ot-1 的拼接：
+
+yt = concat(embedding[t], ot-1)
+
+初始 o₀ 是全零向量。
+
+解码器采用单向 LSTM：
+
+hdec_t, cdec_t = Decoder(yt, hdec_t-1, cdec_t-1)
+
+4️⃣ 注意力机制（Multiplicative Attention）
+计算当前解码器状态和所有编码器状态的相关性打分：
+
+e_{t,i} = (hdec_t)^T × WattProj × henc_i（注意这里用的是乘法 attention）
+
+用 softmax 得到权重 αₜ：
+
+αt = softmax(e_{t,i})
+
+加权求和得到注意力上下文向量 at：
+
+at = Σ αt,i × henc_i
+
+5️⃣ 输出生成（Combined Output）
+拼接注意力输出和当前 decoder 隐状态：
+
+ut = [at; hdec_t] ∈ ℝ³ʰ
+
+线性变换 + tanh + dropout 得到最终 ot：
+
+vt = Wu × ut → ot = dropout(tanh(vt))
+
+6️⃣ 概率分布与训练
+用 ot 映射到目标词汇表上的概率分布：
+
+Pt = softmax(Wvocab × ot)
+
+用交叉熵损失训练：
+
+Jt(θ) = CrossEntropy(Pt, gt)，其中 gt 是当前时刻的目标词 one-hot 向量。
+
+📌 总结一句话：
+这个模型是一个“CNN + BiLSTM 编码器 + 单向 LSTM 解码器 + 乘法注意力”的神经翻译系统，它将中文句子编码成一系列上下文表示，然后通过解码器逐步生成英文词，并通过注意力机制动态聚焦源句中的重要部分。
+
+
+## h_projection
+h_projection 是一个线性变换层（nn.Linear），在 NMT 模型中用于 将 Encoder 最后的 hidden state 转换为 Decoder 的初始 hidden state。我们来看你提供的论文模型描述中的这部分：
+
+📖 来自你文本的原始公式：
+We then initialize the decoder’s first hidden state h₀ᵈᵉᶜ and cell state c₀ᵈᵉᶜ with a linear projection of the encoder’s final hidden state and final cell state.
+
+h₀ᵈᵉᶜ = Wₕ · [h₁ᵉⁿᶜ← ; hₘᵉⁿᶜ→]
+Wₕ ∈ ℝ^{h × 2h}, h₀ᵈᵉᶜ ∈ ℝ^{h × 1}
+
+✅ 所以 h_projection 做的事情是：
+将 Encoder 最后一时刻的双向 hidden state [h_backward_1 ; h_forward_m]（它是一个 2h 维向量）映射成 Decoder 需要的 h 维向量。
+这是通过一个无偏置的全连接层实现的。
+
+🔧 为什么是：
+
+self.h_projection = nn.Linear(in_features=2 * hidden_size, out_features=hidden_size, bias=False)
+参数说明：
+in_features = 2 * hidden_size：因为你用了双向 LSTM，每个时刻的 hidden state 是 [forward; backward] 拼接起来的。
+
+out_features = hidden_size：Decoder 是单向的，它的 hidden state 是 hidden_size 维。
+
+python sanity_check.py 1d 还没解决，不知道哪里出了问题
 
 # Tips
 ## 1. List Comprehensions
