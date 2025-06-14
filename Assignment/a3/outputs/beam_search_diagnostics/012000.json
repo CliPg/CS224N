@@ -1,0 +1,241 @@
+{
+    "example_source": [
+        "▁我还",
+        "澄清",
+        "了",
+        "在该",
+        "会议上",
+        "提出的",
+        "若干",
+        "事项",
+        "。"
+    ],
+    "example_target": [
+        "<s>",
+        "▁i",
+        "▁was",
+        "▁able",
+        "▁to",
+        "▁provide",
+        "▁clarification",
+        "▁on",
+        "▁some",
+        "▁of",
+        "▁the",
+        "▁matters",
+        "▁which",
+        "▁were",
+        "▁raised",
+        "▁at",
+        "▁that",
+        "▁meeting",
+        ".",
+        "</s>"
+    ],
+    "hypotheses": [
+        {
+            "hypothesis": [
+                "▁i",
+                "▁would",
+                "▁like",
+                "▁to",
+                "▁thank",
+                "▁the",
+                "▁secretary",
+                "-",
+                "general",
+                "."
+            ],
+            "score": -15.680906295776367
+        },
+        {
+            "hypothesis": [
+                "▁i",
+                "▁would",
+                "▁like",
+                "▁to",
+                "▁thank",
+                "▁the",
+                "▁secretary",
+                "-",
+                "general",
+                "▁for",
+                "▁the",
+                "▁report",
+                "."
+            ],
+            "score": -19.490848541259766
+        },
+        {
+            "hypothesis": [
+                "▁i",
+                "▁would",
+                "▁like",
+                "▁to",
+                "▁thank",
+                "▁the",
+                "▁secretary",
+                "-",
+                "general",
+                "'",
+                "s",
+                "▁report",
+                "."
+            ],
+            "score": -19.615182876586914
+        },
+        {
+            "hypothesis": [
+                "▁i",
+                "▁would",
+                "▁like",
+                "▁to",
+                "▁thank",
+                "▁the",
+                "▁secretary",
+                "-",
+                "general",
+                "▁for",
+                "▁the",
+                "▁working",
+                "▁group",
+                "."
+            ],
+            "score": -20.220401763916016
+        },
+        {
+            "hypothesis": [
+                "▁i",
+                "▁would",
+                "▁like",
+                "▁to",
+                "▁thank",
+                "▁the",
+                "▁secretary",
+                "-",
+                "general",
+                "'",
+                "s",
+                "▁report",
+                "▁on",
+                "▁the",
+                "▁report",
+                "."
+            ],
+            "score": -23.95952796936035
+        },
+        {
+            "hypothesis": [
+                "▁i",
+                "▁would",
+                "▁like",
+                "▁to",
+                "▁thank",
+                "▁the",
+                "▁secretary",
+                "-",
+                "general",
+                "▁for",
+                "▁the",
+                "▁report",
+                "▁of",
+                "▁the",
+                "▁report",
+                "."
+            ],
+            "score": -24.175132751464844
+        },
+        {
+            "hypothesis": [
+                "▁i",
+                "▁would",
+                "▁like",
+                "▁to",
+                "▁thank",
+                "▁the",
+                "▁secretary",
+                "-",
+                "general",
+                "'",
+                "s",
+                "▁report",
+                "▁to",
+                "▁the",
+                "▁report",
+                "."
+            ],
+            "score": -24.544832229614258
+        },
+        {
+            "hypothesis": [
+                "▁i",
+                "▁would",
+                "▁like",
+                "▁to",
+                "▁thank",
+                "▁the",
+                "▁secretary",
+                "-",
+                "general",
+                "'",
+                "s",
+                "▁report",
+                "▁on",
+                "▁the",
+                "▁draft",
+                "▁resolution",
+                "."
+            ],
+            "score": -25.0343074798584
+        },
+        {
+            "hypothesis": [
+                "▁i",
+                "▁would",
+                "▁like",
+                "▁to",
+                "▁thank",
+                "▁the",
+                "▁secretary",
+                "-",
+                "general",
+                "'",
+                "s",
+                "▁report",
+                "▁on",
+                "▁the",
+                "▁report",
+                "▁of",
+                "▁the",
+                "▁report",
+                "."
+            ],
+            "score": -27.59280776977539
+        },
+        {
+            "hypothesis": [
+                "▁i",
+                "▁would",
+                "▁like",
+                "▁to",
+                "▁thank",
+                "▁the",
+                "▁secretary",
+                "-",
+                "general",
+                "'",
+                "s",
+                "▁report",
+                "▁on",
+                "▁the",
+                "▁meeting",
+                "▁of",
+                "▁the",
+                "▁report",
+                "."
+            ],
+            "score": -28.07779312133789
+        }
+    ],
+    "diagnostic_info": "eyJ0IjogIjIwMjUtMDYtMTNUMDM6MjY6MTQuOTg4NDQ0IiwgImgiOiAiQ2xpUGciLCAidSI6ICI3NzUwNyJ9"
+}
