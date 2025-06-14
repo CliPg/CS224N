@@ -858,8 +858,67 @@ in_features = 2 * hidden_size：因为你用了双向 LSTM，每个时刻的 hid
 
 out_features = hidden_size：Decoder 是单向的，它的 hidden state 是 hidden_size 维。
 
-python sanity_check.py 1d 还没解决，不知道哪里出了问题
+## 题目分析
+### 目标
+- 机器翻译
 
+### 模型描述
+1、
+每个句子的每个词对应一个词向量，记作$x_1,x_2,...,x_m$
+$x_i \in \mathbb{R}^{e \times 1}$，每个$x$代表$e$维的词向量
+$m$是句子的长度
+
+2、
+我们接着将这些嵌入向量送入一个 卷积层（convolutional layer） 中进行处理，但 保持它们的形状不变（意思是仍然逐词保留 e 维的表示，只是做了局部特征提取
+
+3、
+然后，我们将卷积层的输出传入一个 双向编码器
+对于每个位置$i$，我们将正向和反向 LSTM 的隐藏状态（hidden state）和细胞状态（cell state）拼接起来，得到最终的编码器隐藏状态$h_{i}^{enc}$和记忆状态$c_{i}^{enc}$。
+$h_{i}^{enc} = [\overrightarrow{h_i};\overleftarrow{h_i}
+]$
+$c_{i}^{enc} = [\overrightarrow{c_i};\overleftarrow{c_i}
+]$
+$h_{i}^{enc},c_{i}^{enc} \in \mathbb{R}^{2h \times 1}$(竖着叠起来)
+
+4、
+我们将编码器的最终隐藏状态和记忆状态（即 cell state）通过一个线性变换，用来初始化 解码器的第一个隐藏状态和记忆状态。
+$h_{0}^{dec} = W_h · [\overleftarrow{h_{1}^{enc}};\overrightarrow{h_{m}^{enc}}]$
+$c_{0}^{dec} = W_h · [\overleftarrow{c_{1}^{enc}};\overrightarrow{c_{m}^{enc}}]$
+$W_h \in \mathbb{R}^{h \times 2h}, h_{0}^{dec} \in \mathbb{R}^{h \times 1}$
+5、
+初始化了解码器后，我们就要开始逐步解码目标句子
+在第t步，我们从目标句子中取出第t个子（subword），查找它的嵌入向量$y_t$。
+然后我们把这个向量和上一个时间步的 combined output $o_{t-1} \in \mathbb{R}^{h \times 1}$向量拼接在一起。
+拼接后得到的输入向量维度是 (e+h)×1，记作
+$\bar y_t   \in \mathbb{R}^{(e+h) \times 1}$
+
+6、
+我们将拼接好的$y_t$和上一步的隐藏状态$h_{t-1}^{dec}$、记忆状态$c_{t-1}^{dec}$一起输入到解码器中，输出新的状态。
+$h_{t}^{dec}, c_{t}^{dec} = Decorder(\bar y_t , h_{t-1}^{dec}, c_{t-1}^{dec})$
+
+7、
+计算第$i$个词，第$t$步的分数$e_{t,i}$
+$e_{t,i} = (h_t^{dec})^TW_{attProj}h_i^{enc}$
+$e_t\in \mathbb{R}^{m \times 1},W_{attProj}\in \mathbb{R}^{h \times 2h}  $
+再经过softmax
+$\alpha _{t} = softmax(e_t)$
+注意力分数
+$a_t = \sum^{m}_{i=1} \alpha _{t,i}h_i^{enc}$
+$a_t \in \mathbb{R}^{2h \times 1}$
+
+8、
+获取$o_t$
+$u_t = [a_t; h_t^{dec}], u_t \in \mathbb{R}^{3h \times 1}$
+$v_t = W_uu_t,W_u \in \mathbb{R}^{h \times 3h},v_t \in \mathbb{R}^{h \times 1}$ 
+$o_t = dropout(tanh(v_t)),o_t \in \mathbb{R}^{h \times 1}$
+
+9、
+![在这里插入图片描述](https://i-blog.csdnimg.cn/direct/5ed5c870b73e4eb883918a9a7d3928b7.png)
+$P_t = softmax(W_{vocab}o_t)$
+
+10、
+![在这里插入图片描述](https://i-blog.csdnimg.cn/direct/ae1d88200eed416e8555f9146a875ac1.png)
+$J_t(\theta ) = CrossEntropy(P_t,g_t)$
 # Tips
 ## 1. List Comprehensions
 ```py
