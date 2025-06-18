@@ -10,7 +10,7 @@
 ​
 
 ## Co-Occurrence
-共现(?)矩阵(Co-Occurrence matrix)，矩阵的每个值$w_{i,j}$，表示在一个文档中，表示词$w_{i}$在窗口大小$n$内，词$w_{j}$出现的个数，反之亦然。
+共现矩阵(Co-Occurrence matrix)，矩阵的每个值$w_{i,j}$，表示在一个文档中，表示词$w_{i}$在窗口大小$n$内，词$w_{j}$出现的个数，反之亦然。
 
 **Example: Co-Occurrence with Fixed Window of n=1**:
 
