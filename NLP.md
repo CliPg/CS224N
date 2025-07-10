@@ -1,4 +1,4 @@
-​
+
 # Word vectors
 "You shall know a word by the company it keeps"
 
@@ -137,7 +137,7 @@ sum() 计算这 5 维特征一共解释的数据方差占比，衡量降维后�
 
 
 ## Skip-gram with softmax
-$$ 
+$$
 P(O = o \mid C = c) = \frac{\exp(u_o^\top v_c)}{\sum_{w \in \text{Vocab}} \exp(u_w^\top v_c)}
 $$
 
@@ -1110,8 +1110,116 @@ Softmax 后，带 −∞ 的位置对应权重为 0，即被屏蔽。
 
 ## Encoder-Decoder
 
+## GPT2
 
+### CausalSelfAttention
+
+这个模块主要完成
+
+输入 hidden_states → 生成 Q, K, V → 多头注意力 → 输出与原维度一致的张量
+
+---
+
+#### init
+
+```python
+self.query = nn.Linear(config.hidden_size, self.all_head_size)
+self.key = nn.Linear(config.hidden_size, self.all_head_size)
+self.value = nn.Linear(config.hidden_size, self.all_head_size)
+```
+
+分别为Q、K、V的线性变换
+
+
+
+#### transform
+
+```python
+  def transform(self, x, linear_layer):
+    # The corresponding linear_layer of k, v, q are used to project the hidden_state (x).
+    proj = linear_layer(x)
+    # Next, we need to produce multiple heads for the proj. This is done by spliting the
+    # hidden state to self.num_attention_heads, each of size self.attention_head_size.
+    proj = rearrange(proj, 'b t (h d) -> b t h d', h=self.num_attention_heads)
+    # By proper transpose, we have proj of size [bs, num_attention_heads, seq_len, attention_head_size].
+    proj = rearrange(proj, 'b t h d -> b h t d')
+    return proj
+```
+
+将Q、K、V分头
+
+```python
+proj = rearrange(proj, 'b t (h d) -> b t h d', h=self.num_attention_heads)
+```
+
+是使用 einops.rearrange 对张量 proj 的维度进行重排列，它的作用是将一个形状为 [batch_size, seq_len, all_head_size] 的张量，重新 reshape 成每个注意力头维度的形式，用于多头注意力机制中。
+
+输入：
+
+- `x.shape = [batch_size, seq_len, hidden_size]`
+- `proj.shape = [batch_size, seq_len, all_head_size]`
+   例如：[2, 16, 768] → reshape → [2, 12, 16, 64]
+
+步骤：
+
+- 把 `all_head_size` 拆成 `(h × d)` → `[b, t, h, d]`
+- 然后转置成 `[b, h, t, d]`，便于后续矩阵乘计算 attention。
+
+after transform
+
+QKV.shape = [batch_size, num_heads, num_heads, head_size]
+
+#### attention
+
+计算注意力输出
+
+```
+`query`, `key`, `value`：shape 为 `[batch, num_heads, seq_len, head_dim]
+```
+
+  hidden_states: [bs, seq_len, hidden_state]
+
+  attention_mask: [bs, 1, 1, seq_len]
+
+  output: [bs, seq_len, hidden_state]
+
+
+我的实现:
+```python
+def attention(self, key, query, value, attention_mask):
+  ### YOUR CODE HERE
+  attention_scores = torch.matmul(query, key.transpose(-1,-2)) / math.sqrt(self.attention_head_size)
+  
+  seq_len = query.size(-2)
+  causal_mask = torch.tril(torch.ones((seq_len, seq_len), device = query.device)).unsqueeze(0).unsqueeze(0)
+  attention_scores = attention_scores.masked_fill(causal_mask == 0, float('-inf'))
+  
+  if attention_mask is not None:
+    attention_scores += attention_mask
+  attention_probs = torch.softmax(attention_scores, dim=-1)
+  attention_probs = self.dropout(attention_probs)
+  attention_output = torch.matmul(attention_probs, value)
+  attention_output = rearrange(attention_output, 'b h t d -> b t (h d)')
+  return attention_output
+```
+causal_mask和attention_mask是不一样的
+| 特性       | `attention_mask`            | `causal_mask`                   |
+| -------- | --------------------------- | ------------------------------- |
+| 目的       | 避免关注 padding 位置             | 避免关注未来信息（保持因果性）                 |
+| 应用场景     | 所有 Transformer（BERT, GPT 等） | GPT、AutoRegressive 模型等          |
+| 是否静态生成   | 是，由 tokenizer 提供            | 是，通常代码中使用 `torch.tril` 生成       |
+| 掩码形状（典型） | `[bs, 1, 1, seq_len]`       | `[1, 1, seq_len, seq_len]`（下三角） |
+| 遮蔽谁      | padding 的位置                 | 当前 token 之后的所有 token            |
+
+#### GPT2的transformer层
+![在这里插入图片描述](https://i-blog.csdnimg.cn/direct/7e1a384db9da42a7bf531839b95e65f9.png)
+
+
+### Adam Optimizer
+Adam 优化器的主要思想是：
+对梯度的均值和方差 进行滑动平均估计，得到每个参数的自适应学习率，并进行偏差修正，使优化更快、更稳定。
 # Tips
+
 ## 1. List Comprehensions
 ```py
 a_list = [1, ‘4’, 9, ‘a’, 0, 4]
