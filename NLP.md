@@ -1172,7 +1172,51 @@ X_{\mathrm{pos}} = X + \Phi
 
 这样就将 绝对位置信息显式注入了模型输入中，使得模型能感知序列顺序。
 
+### 其他的位置编码方式 RoPE
+传统 Transformer 中使用 绝对位置编码（absolute positional embeddings），这会导致模型在处理比训练长度更长的上下文（如训练时为 128，测试时为 1000）时性能下降。
 
+RoPE 提供了一种 相对位置编码（relative positional embeddings） 的方式，它能更好地泛化到更长的序列。
+
+对于位置 $t$ 上的二维特征向量 $(x^{(1)}_t, x^{(2)}_t)$，RoPE 通过一个旋转矩阵编码位置信息：
+
+\[
+\mathrm{RoPE}(x_t^{(1)}, x_t^{(2)}, t) = \begin{bmatrix} 
+\cos(t\theta) & -\sin(t\theta) \\ 
+\sin(t\theta) & \cos(t\theta) 
+\end{bmatrix} \begin{bmatrix} 
+x_t^{(1)} \\ 
+x_t^{(2)} 
+\end{bmatrix}
+\]
+
+对于更高维特征向量，RoPE 将每两维应用一次这样的旋转。每对维度使用不同角度：
+
+\[
+\theta_i = 10000^{-2(i-1)/d}, \quad i \in \{1, 2, \ldots, d/2\}
+\]
+
+我们也可以将每一对维度表示成一个复数
+\[z _ { t } ^ { ( i ) } = x _ { t } ^ { ( 2 i - 1 ) } + i \cdot x _ { t } ^ { ( 2 i ) }\]
+
+将旋转操作重写为复数乘法
+\[ \text{RoPE}(z^{(i)}_t,t) = z^{(i)}_t - e^{it\theta _i} = z^{(i)}_t \cdot (\cos(t \theta _i) + i \sin(t \theta _i)) \]
+最终可以用如下形式表示整个embedding
+\[
+\mathrm{RoPE}(x, t) = 
+\begin{bmatrix} 
+e^{it \theta_{1}} \\ 
+e^{it \theta_{2}} \\ 
+\vdots \\ 
+e^{it \theta_{d/2}} 
+\end{bmatrix} 
+\odot 
+\begin{bmatrix} 
+x^{(1)}_t + i x^{(2)}_t \\ 
+x^{(3)}_t + i x^{(4)}_t \\ 
+\vdots \\ 
+x^{(d-1)}_t + i x^{(d)}_t 
+\end{bmatrix}
+\]
 ## Encoder-Decoder
 
 ## GPT2

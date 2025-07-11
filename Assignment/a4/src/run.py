@@ -16,6 +16,7 @@ import os
 mingpt_demo_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'mingpt-demo'))
 sys.path.append(mingpt_demo_path)
 from mingpt.model import GPT, GPTConfig
+from mingpt.trainer import Trainer, TrainerConfig
 
 random.seed(0)
 
@@ -109,7 +110,12 @@ if args.function == 'pretrain':
     # writer=writer
 
     ### YOUR CODE HERE ###
-    
+    preconf = TrainerConfig(max_epochs=650, batch_size=128, learning_rate=args.pretrain_lr,
+                          lr_decay=True, warmup_tokens=512*20, fnial_tokens=650*len(pretrain_dataset)*block_size,
+                          num_workers=4, writer=writer)
+    pretrainer = Trainer(model, pretrain_dataset, preconf)
+    pretrainer.train()
+    torch.save(model.state_dict(), args.writing_params_path)
     ### END YOUR CODE ###
 elif args.function == 'finetune':
     assert args.writing_params_path is not None
@@ -148,7 +154,19 @@ elif args.function == 'finetune':
     #     number of epochs for each case.
 
     ### YOUR CODE HERE ###
-    pass
+    text = open(args.finetune_corpus_path, encoding='utf-8').read()
+    finetune_dataset = dataset.CharCorruptionDataset(text, block_size)
+    if args.reading_params_path is not None:
+        model.load_state_dict(torch.load(args.reading_params_path))
+        max_epochs = 10
+    else:
+        max_epochs = 75
+    fconf = TrainerConfig(max_epochs=max_epochs, batch_size=256, learning_rate=args.finetune_lr,
+                          lr_decay=True, warmup_tokens=512*20, final_tokens=200*len(pretrain_dataset)*block_size,
+                          num_workers=4, writer=writer)
+    finetuner = Trainer(model, finetune_dataset, fconf)
+    finetuner.train()
+    torch.save(model.state_dict(), args.writing_params_path)
     ### END YOUR CODE ###
 elif args.function == 'evaluate':
     assert args.outputs_path is not None
