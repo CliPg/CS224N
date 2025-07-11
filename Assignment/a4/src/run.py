@@ -74,7 +74,6 @@ if args.variant == 'vanilla':
     # TODO: [part c] Make some model here
     ### YOUR CODE HERE ###
     model = GPT(mconf)
-    pass
     ### END YOUR CODE ###
 elif args.variant == 'rope':
     # TODO: [part g] Make some other model here
@@ -110,7 +109,7 @@ if args.function == 'pretrain':
     # writer=writer
 
     ### YOUR CODE HERE ###
-    pass
+    
     ### END YOUR CODE ###
 elif args.function == 'finetune':
     assert args.writing_params_path is not None
