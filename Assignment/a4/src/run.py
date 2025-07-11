@@ -12,10 +12,9 @@ from torch.utils.tensorboard import SummaryWriter
 
 import sys
 import os
+
 mingpt_demo_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'mingpt-demo'))
 sys.path.append(mingpt_demo_path)
-
-# 现在可以导入 mingpt.model 里的内容
 from mingpt.model import GPT, GPTConfig
 
 random.seed(0)
